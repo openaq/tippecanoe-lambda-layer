@@ -1,0 +1,80 @@
+name: Build and deploy layer
+
+on:
+  push:
+    tags:
+      - release-*
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build image
+        run: docker build -f ./dockerfiles/x86/Dockerfile -t tippecanoe-lambda-x86 .
+
+      - name: Run image
+        run: docker run --volume .:/tmp tippecanoe-lambda-x86
+
+      - name: upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: tippecanoe-lambda-x86
+          path: ./build.zip
+
+  publish:
+    needs: build
+    strategy:
+      matrix:
+        region:
+          [
+            'us-east-1',
+            'us-east-2',
+            'us-west-1',
+            'us-west-2',
+            'ap-northeast-1',
+            'ap-southeast-2',
+            'ap-southeast-1',
+            'eu-west-1',
+          ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: tippecanoe-lambda-x86
+
+      - name: Copy layer zip file to S3
+        env:
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+        run: |
+          aws s3 cp build.zip s3://"$S3_BUCKET"-${{ matrix.region }}/tippecanoe-x86/build.zip
+
+      - name: Update lambda layer
+        env:
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+        run: |
+          aws lambda publish-layer-version \
+          --layer-name tippecanoe-lambda \
+          --region ${{ matrix.region }} \
+          --compatible-architectures x86_64 \
+          --description "Tippecanoe for AWS Lambda" \
+          --content S3Bucket="$S3_BUCKET"-${{ matrix.region }},S3Key=tippecanoe-x86/build.zip
