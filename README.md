@@ -16,7 +16,7 @@ Layers are available at the follow ARNs across multiple AWS regions:
 |  ap-northeast-1| arn:aws:ap-northeast-1:470049585876:layer:tippecanoe-lambda:1 |
 |  ap-southeast-2| arn:aws: ap-southeast-2:470049585876:layer:tippecanoe-lambda:1 |
 |  ap-southeast-1| arn:aws:lambda: ap-southeast-1:470049585876:layer:tippecanoe-lambda:1 |
-|  eu-west-1| arn:aws:lambda:|  eu-west-1:470049585876:layer:tippecanoe-lambda:1 |
+|  eu-west-1| arn:aws:lambda:eu-west-1:470049585876:layer:tippecanoe-lambda:1 |
 
 
 
