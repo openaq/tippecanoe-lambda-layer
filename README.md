@@ -1,6 +1,6 @@
 # Tippecanoe lambda layer
 
-An AWS Lambda layer for |  using Tippecanoe in AWS lambda.
+An AWS Lambda layer for using Tippecanoe in AWS lambda.
 
 This repo contains Dockerfiles and the build scripts for generating the layers.
 
